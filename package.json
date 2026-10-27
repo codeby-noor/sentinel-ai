@@ -1,0 +1,29 @@
+{
+  "name": "sentinel-ai",
+  "version": "1.0.0",
+  "description": "Sentinel AI — AI-Powered Incident Intelligence & Developer Operations Platform",
+  "private": true,
+  "packageManager": "npm@11.16.0",
+  "workspaces": [
+    "apps/web",
+    "apps/api"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace=apps/api\" \"npm run dev --workspace=apps/web\"",
+    "dev:api": "npm run dev --workspace=apps/api",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "build": "npm run build --workspace=apps/api && npm run build --workspace=apps/web",
+    "start": "concurrently \"npm run start --workspace=apps/api\" \"npm run start --workspace=apps/web\"",
+    "test": "npm run test --workspace=apps/api && npm run test --workspace=apps/web",
+    "lint": "echo \"lint: add eslint config per workspace\"",
+    "prisma:generate": "npm run prisma:generate --workspace=apps/api",
+    "prisma:migrate": "npm run prisma:migrate --workspace=apps/api",
+    "prisma:seed": "npm run prisma:seed --workspace=apps/api"
+  },
+  "devDependencies": {
+    "concurrently": "9.0.1"
+  },
+  "engines": {
+    "node": ">=20 <25"
+  }
+}
