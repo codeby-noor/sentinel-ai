@@ -1,7 +1,15 @@
-const API = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
+const API = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
+
+export function apiBaseUrl(isProduction = process.env.NODE_ENV === 'production'): string {
+  if (!API && isProduction) {
+    throw new Error('NEXT_PUBLIC_API_BASE_URL must be configured for production.');
+  }
+  return (API || 'http://localhost:4000').replace(/\/+$/, '');
+}
 
 export function apiUrl(path: string): string {
-  return `${API}${path.startsWith('/') ? path : '/' + path}`;
+  const base = apiBaseUrl();
+  return `${base}${path.startsWith('/') ? path : '/' + path}`;
 }
 
 function orgHeaders(): Record<string, string> {

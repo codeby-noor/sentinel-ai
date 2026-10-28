@@ -1,7 +1,7 @@
 import { validate } from 'class-validator';
 import * as bcrypt from 'bcryptjs';
 import { AuthService } from './auth.service';
-import { RegisterDto } from './auth.dto';
+import { LoginDto, RegisterDto } from './auth.dto';
 import { PASSWORD_RULE_MESSAGE } from './password-policy';
 
 function mockJwt() {
@@ -86,5 +86,74 @@ describe('demo login credentials', () => {
     const prisma = mockPrisma({ user: { findUnique: jest.fn().mockResolvedValue({ id: 'u1', email: 'demo@sentinel.dev', passwordHash: hash, sessionVersion: 0 }) } });
     const out = await new AuthService(prisma, mockJwt()).login({ email: 'demo@sentinel.dev', password: 'Sentinel123!' });
     expect(out.user.email).toBe('demo@sentinel.dev');
+  });
+});
+
+describe('login and current session', () => {
+  it('normalizes the email, verifies bcrypt, and returns a signed session with memberships', async () => {
+    const hash = await bcrypt.hash('correct-password', 12);
+    const memberships = [{ organization: { id: 'org-1' }, role: 'MEMBER' }];
+    const prisma = mockPrisma({
+      user: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'user-1',
+          email: 'user@example.com',
+          name: 'Test User',
+          passwordHash: hash,
+          sessionVersion: 2,
+        }),
+      },
+      membership: { findMany: jest.fn().mockResolvedValue(memberships) },
+    });
+    const jwt = mockJwt();
+    const service = new AuthService(prisma, jwt);
+
+    const result = await service.login({ email: ' USER@example.com ', password: 'correct-password' });
+
+    expect(prisma.user.findUnique).toHaveBeenCalledWith({ where: { email: 'user@example.com' } });
+    expect(jwt.signAsync).toHaveBeenCalledWith({ sub: 'user-1', email: 'user@example.com', sv: 2 });
+    expect(result.token).toBe('jwt-test-token');
+    expect(result.memberships).toEqual(memberships);
+  });
+
+  it('uses the same invalid-credentials response for unknown users and wrong passwords', async () => {
+    const serviceFor = (user: any) =>
+      new AuthService(mockPrisma({ user: { findUnique: jest.fn().mockResolvedValue(user) } }), mockJwt());
+
+    await expect(serviceFor(null).login({ email: 'missing@example.com', password: 'any-password' }))
+      .rejects.toThrow('Invalid email or password');
+
+    const hash = await bcrypt.hash('correct-password', 12);
+    await expect(
+      serviceFor({ id: 'user-1', passwordHash: hash }).login({ email: 'user@example.com', password: 'wrong-password' }),
+    ).rejects.toThrow('Invalid email or password');
+  });
+
+  it('validates missing login fields at the DTO boundary', async () => {
+    const errors = await validate(new LoginDto());
+    expect(errors.map((error) => error.property).sort()).toEqual(['email', 'password']);
+  });
+
+  it('returns the authenticated user and memberships from the current-session lookup', async () => {
+    const memberships = [{ organization: { id: 'org-1' }, role: 'MEMBER' }];
+    const prisma = mockPrisma({
+      user: {
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'user-1',
+          email: 'user@example.com',
+          name: 'Test User',
+          createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        }),
+      },
+      membership: { findMany: jest.fn().mockResolvedValue(memberships) },
+    });
+    const result = await new AuthService(prisma, mockJwt()).me('user-1');
+    expect(result.user.email).toBe('user@example.com');
+    expect(result.memberships).toEqual(memberships);
+  });
+
+  it('rejects a session whose user no longer exists', async () => {
+    const service = new AuthService(mockPrisma(), mockJwt());
+    await expect(service.me('missing-user')).rejects.toThrow('Session user not found');
   });
 });

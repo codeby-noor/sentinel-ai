@@ -7,11 +7,12 @@ test('register page renders with exact-8 rule', async ({ page }) => {
   await expect(page.getByLabel(/confirm password/i)).toBeVisible();
 });
 
-test('login shows demo account, forgot link, and register link', async ({ page }) => {
+test('login shows the sign-in form, forgot link, and register link without unverified demo credentials', async ({ page }) => {
   await page.goto('/login');
-  await expect(page.getByRole('button', { name: /use demo account/i })).toBeVisible();
+  await expect(page.getByLabel('Email')).toBeVisible();
+  await expect(page.getByLabel('Password')).toBeVisible();
   await expect(page.getByRole('link', { name: /forgot password/i })).toBeVisible();
-  await expect(page.getByText('user123@gmail.com')).toBeVisible();
+  await expect(page.getByText(/only in environments where demo data has been explicitly seeded/i)).toBeVisible();
 });
 
 test('forgot + reset pages render', async ({ page }) => {

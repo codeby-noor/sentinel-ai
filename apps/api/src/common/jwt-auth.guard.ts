@@ -10,17 +10,21 @@ export class JwtAuthGuard implements CanActivate {
     const req = ctx.switchToHttp().getRequest();
     const token = req.cookies?.sentinel_session || this.bearer(req.headers?.authorization);
     if (!token) throw new UnauthorizedException('Not authenticated');
+    let payload: { sub: string; sv?: number };
     try {
-      const payload = await this.jwt.verifyAsync(token);
-      const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
-      if (!user) throw new UnauthorizedException('Session user not found');
-      // Revoked when sessionVersion was bumped (e.g. after a password reset).
-      if ((payload.sv ?? 0) !== (user as any).sessionVersion) throw new UnauthorizedException('Session revoked, please sign in again');
-      req.user = { id: user.id, email: user.email };
-      return true;
+      payload = await this.jwt.verifyAsync<{ sub: string; sv?: number }>(token);
     } catch {
       throw new UnauthorizedException('Invalid or expired session');
     }
+
+    const user = await this.prisma.user.findUnique({ where: { id: payload.sub } });
+    if (!user) throw new UnauthorizedException('Session user not found');
+    // Revoked when sessionVersion was bumped (e.g. after a password reset).
+    if ((payload.sv ?? 0) !== (user as any).sessionVersion) {
+      throw new UnauthorizedException('Session revoked, please sign in again');
+    }
+    req.user = { id: user.id, email: user.email };
+    return true;
   }
 
   private bearer(h?: string): string | undefined {

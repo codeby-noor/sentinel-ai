@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { apiFetch } from '@/lib/api';
+import { apiFetch, apiUrl } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { StatusBadge, ErrorBox } from '@/components/ui';
 
@@ -18,7 +18,7 @@ export default function IncidentsPage() {
   // Realtime: refresh on SSE events
   useEffect(() => {
     if (!orgId) return;
-    const es = new EventSource(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000'}/api/v1/events/stream?orgId=${orgId}`, { withCredentials: true } as any);
+    const es = new EventSource(apiUrl(`/api/v1/events/stream?orgId=${encodeURIComponent(orgId)}`), { withCredentials: true });
     es.addEventListener('incident.created', load);
     es.addEventListener('incident.updated', load);
     return () => es.close();

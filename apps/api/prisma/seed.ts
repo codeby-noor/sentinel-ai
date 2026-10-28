@@ -229,7 +229,7 @@ export async function seedDatabase(prisma: PrismaClient) {
   });
 
   // eslint-disable-next-line no-console
-  console.log('Seed complete. Demo logins: demo@sentinel.dev and user123@gmail.com (see login page).');
+  console.log('Demo data seed complete.');
 }
 
 async function main() {
@@ -242,5 +242,13 @@ async function main() {
 }
 
 if (require.main === module) {
-  main().catch((e) => { console.error(e); process.exit(1); });
+  if (process.env.NODE_ENV === 'production' && process.env.ALLOW_DEMO_SEED_IN_PRODUCTION !== '1') {
+    console.error('Refusing to create demo accounts and data in production. Set ALLOW_DEMO_SEED_IN_PRODUCTION=1 only for an explicitly authorized demo deployment.');
+    process.exitCode = 1;
+  } else {
+    main().catch(() => {
+      console.error('Demo seed failed. Check database connectivity and schema state.');
+      process.exitCode = 1;
+    });
+  }
 }

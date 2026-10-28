@@ -2,7 +2,7 @@
 
 Monitors services, ingests structured logs, auto-creates deduplicated incidents, investigates probable root causes with an external AI provider (graceful fallback when unconfigured), and coordinates resolution with runbooks, assignments, comments, notifications, analytics, and realtime updates.
 
-> **Demonstration environment:** the seed script creates clearly-labelled **demo** data (`user123@gmail.com / user@123`, MEMBER of Demo Org): 5 services, 6 realistic incidents (payment latency, auth errors, DB pool exhaustion, notification backlog, inventory sync, vendor timeouts — statuses OPEN/ACKNOWLEDGED/INVESTIGATING/RESOLVED/REOPENED, all titled “…(demo)”), supporting logs, timelines, and remediation notes. The UI carries a persistent “Demonstration environment” banner. Seeded demo data is never presented as live production telemetry — all dashboard/analytics numbers are computed from stored records (see “How metrics are calculated” on the Analytics page).
+> **Demonstration environment:** the explicit seed command creates clearly-labelled **demo** data and demo accounts, along with 5 services, 6 realistic incidents, supporting logs, timelines, and remediation notes. The UI carries a persistent “Demonstration environment” banner. Seeded demo data is never presented as live production telemetry — all dashboard/analytics numbers are computed from stored records (see “How metrics are calculated” on the Analytics page). Demo accounts are not guaranteed to exist in production; production seeding is blocked unless explicitly authorized.
 
 ## Architecture
 
@@ -51,7 +51,7 @@ docker compose ps       # all four services should reach Up (healthy)
 docker compose exec -T api npm run prisma:seed   # idempotent demo data
 ```
 
-Demo login: `user123@gmail.com / user@123` (Use-demo-account fill button on the login page; seeded MEMBER of Demo Org). Seeded admin also works: `demo@sentinel.dev / Sentinel123!`.
+In a local development database that has been explicitly seeded, the demo member and admin accounts described by `apps/api/prisma/seed.ts` can be used to explore the sample data. The login page does not display or prefill demo credentials, and production login availability depends on the accounts in that deployment's database.
 
 Password rule: new passwords (registration and reset) must be **exactly 8 characters** (`Password must be exactly 8 characters.`), enforced on frontend and backend with bcrypt hashing (12 rounds). Existing longer passwords keep working for login.
 

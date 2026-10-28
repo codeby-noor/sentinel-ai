@@ -40,12 +40,11 @@ describe('RegisterPage', () => {
 });
 
 describe('LoginPage', () => {
-  it('shows demo credentials and fills them without bypassing auth', () => {
+  it('does not advertise or prefill unverified demo credentials', () => {
     render(<LoginPage />);
-    expect(screen.getByText('user123@gmail.com')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /use demo account/i }));
-    expect((screen.getByLabelText(/email/i, { selector: 'input' }) as HTMLInputElement).value).toBe('user123@gmail.com');
-    expect((screen.getByLabelText(/^password/i, { selector: 'input' }) as HTMLInputElement).value).toBe('user@123');
+    expect((screen.getByLabelText(/email/i, { selector: 'input' }) as HTMLInputElement).value).toBe('');
+    expect(screen.queryByRole('button', { name: /use demo account/i })).not.toBeInTheDocument();
+    expect(screen.getByText(/only in environments where demo data has been explicitly seeded/i)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /forgot password/i })).toBeInTheDocument();
   });
 });

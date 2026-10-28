@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Ip, Patch, Post, Res, UseGuards } from '@nestjs/common';
-import type { Response } from 'express';
+import type { CookieOptions, Response } from 'express';
 import { getEnv } from '../../config/env';
 import { CurrentUser, AuthUser } from '../../common/current-user';
 import { JwtAuthGuard } from '../../common/jwt-auth.guard';
@@ -7,13 +7,19 @@ import { AuthService } from './auth.service';
 import { PasswordResetService } from './password-reset.service';
 import { ForgotPasswordDto, LoginDto, RegisterDto, ResetPasswordDto, UpdateProfileDto } from './auth.dto';
 
-function setSessionCookie(res: Response, token: string) {
+function sessionCookieOptions(): Pick<CookieOptions, 'httpOnly' | 'sameSite' | 'secure' | 'path'> {
   const env = getEnv();
-  res.cookie('sentinel_session', token, {
+  return {
     httpOnly: true,
-    sameSite: 'lax',
-    secure: env.COOKIE_SECURE && env.NODE_ENV === 'production',
+    sameSite: env.NODE_ENV === 'production' ? 'none' : 'lax',
+    secure: env.NODE_ENV === 'production' || env.COOKIE_SECURE,
     path: '/',
+  };
+}
+
+function setSessionCookie(res: Response, token: string) {
+  res.cookie('sentinel_session', token, {
+    ...sessionCookieOptions(),
     maxAge: 7 * 24 * 3600 * 1000,
   });
 }
@@ -38,7 +44,7 @@ export class AuthController {
 
   @Post('logout')
   async logout(@Res({ passthrough: true }) res: Response) {
-    res.clearCookie('sentinel_session', { path: '/' });
+    res.clearCookie('sentinel_session', sessionCookieOptions());
     return { ok: true };
   }
 

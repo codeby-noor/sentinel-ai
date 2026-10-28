@@ -2,12 +2,12 @@ import { z } from 'zod';
 
 const envSchema = z.object({
   NODE_ENV: z.string().default('development'),
-  API_PORT: z.coerce.number().default(4000),
+  API_PORT: z.coerce.number().default(Number(process.env.PORT || 4000)),
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
   REDIS_URL: z.string().default(''),
   JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
   JWT_EXPIRES_IN: z.string().default('7d'),
-  COOKIE_SECURE: z.coerce.boolean().default(false),
+  COOKIE_SECURE: z.enum(['true', 'false']).default('false').transform((value) => value === 'true'),
   CORS_ORIGIN: z.string().default('http://localhost:3000'),
   OPENAI_API_KEY: z.string().default(''),
   OPENAI_MODEL: z.string().default('gpt-4o-mini'),

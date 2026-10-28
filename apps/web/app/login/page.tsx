@@ -2,11 +2,8 @@
 import { useState } from 'react';
 import { apiFetch } from '@/lib/api';
 
-const DEMO_EMAIL = 'user123@gmail.com';
-const DEMO_PASSWORD = 'user@123';
-
 export default function LoginPage() {
-  const [email, setEmail] = useState(DEMO_EMAIL);
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -19,8 +16,6 @@ export default function LoginPage() {
       window.location.href = '/';
     } catch (err: any) { setError(err.message); } finally { setBusy(false); }
   };
-
-  const fillDemo = () => { setEmail(DEMO_EMAIL); setPassword(DEMO_PASSWORD); setError(''); };
 
   return (
     <div className="card" style={{ maxWidth: 440 }}>
@@ -39,13 +34,7 @@ export default function LoginPage() {
         <button className="btn primary" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
       </form>
       <p style={{ fontSize: 14 }}><a href="/forgot-password">Forgot password?</a> · No account? <a href="/register">Register</a></p>
-      <div className="alert info" aria-label="Demo account">
-        <strong>Demo account</strong> (sample data only)<br />
-        Email: <code className="mono">{DEMO_EMAIL}</code><br />
-        Password: <code className="mono">{DEMO_PASSWORD}</code><br />
-        <button type="button" className="btn" style={{ marginTop: 8 }} onClick={fillDemo}>Use demo account</button>
-      </div>
-      <p style={{ fontSize: 13, color: 'var(--muted)' }}>Seeded admin also works: demo@sentinel.dev / Sentinel123!</p>
+      <p style={{ fontSize: 13, color: 'var(--muted)' }}>Demo accounts are available only in environments where demo data has been explicitly seeded.</p>
     </div>
   );
 }
